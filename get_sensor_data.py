@@ -12,7 +12,7 @@ import time
 #create filename
 name="test_dat"
 
-f=open(name+'.csv', 'wt');
+f=open(name+'.csv', 'wt')
 
 #Initialize the CSV writer
 writer = csv.writer(f,delimiter='\t')
@@ -46,5 +46,5 @@ for t in range(100):
 
  
 #When finish, close the file and the serial port.
-f.close();
-ser.close();
+f.close()
+ser.close()

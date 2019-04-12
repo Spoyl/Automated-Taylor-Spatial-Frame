@@ -3,8 +3,6 @@
 #include <Wire.h>
 
 
-
-
 // DECLARE ENCODER PINS
   Encoder MOTOR_01(14,15);
   Encoder MOTOR_00(16,17);  
@@ -85,9 +83,10 @@ void loop(){
 
 
 void printVibrationData(int num, byte dat, int i){
-  
-  setSampleRate();
+
   enableADXL();
+  setSampleRate();
+  normalPowerOp();
   
   // X SAMPLE --------------------------------------------------
     Wire.beginTransmission(0x53);     //start transmission to device 
@@ -158,6 +157,13 @@ void printVibrationData(int num, byte dat, int i){
 }
 
 
+void selfTest(){
+  
+  write_To(0x53, 0x31, 0);
+  write_To(0x53, 0x31, 0xD7);
+  write_To(0x53, 0x31, 0);  
+}
+
 
 void logVibration(){
 
@@ -184,15 +190,21 @@ void printADXLID(){
 void enableADXL() {
   
   write_To(0x53, 0x2D, 0);      
-  write_To(0x53, 0x2D, 16);             // 16 refers to D3 (measure) bit
+  write_To(0x53, 0x2D, 16);             // 16 refers to D3 (measure) bit 
   write_To(0x53, 0x2D, 8);              // does this set the bit?
 
 }
 
 
+void normalPowerOp(){
+
+  write_To(0x53, 0x2C, 0);
+}
+
+
 void setSampleRate(){
   
-  write_To(0x53,0x2C,0x0F);            // 3200Hz
+  write_To(0x53,0x2C,0x0D);            // 3200Hz (0x0F) (change to 800Hz(0x0D))
 
 }
 
