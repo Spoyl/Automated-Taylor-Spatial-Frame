@@ -87,8 +87,9 @@ void setup() {
 
 void loop(){
 
-  enableADXL();
-  
+  enableADXL();       // enable the measure bit
+  setBW(13);          // set bandwidth to 400 Hz
+
   
 //  Wire.beginTransmission(0X53);     //start transmission to device
 //  Wire.write(0X32);                 //sends address to read from (WRITE appends 0)
@@ -110,9 +111,19 @@ void loop(){
 
 
 
+void setBW(int RATE){
+  // set the bandwidth of the ADXL
+  // a value 13 gives a bandwidth of 400 Hz
+  
+  Wire.beginTransmission(0x53);
+  Wire.write(0x2C);                       // Access PWR_CTL Register
+  Wire.write(RATE);
+  Wire.endTransmission(false);
+  delay(10);
 
+}
 
-void checkBW(){
+void readBW(){
   
   // Returns the value of the BW_RATE register
   // 1010 = 50 Hz BW
@@ -124,7 +135,7 @@ void checkBW(){
   Wire.endTransmission(false);
   Wire.requestFrom(0x53,1, true);   // Read 1 bytes
   Serial.println(Wire.read(), BIN);
-  delay(1000);
+  delay(10);
   
 }
 
@@ -153,7 +164,7 @@ void logVibration(){
 
 void printADXLID(){
   
-  // Returns the ADXL ID of 0xE5 (11100101)
+  // Returns the ADXL ID of 0xE5 (11100101). Useful for debugging.
   
   Wire.beginTransmission(0x53);     //start transmission to device
   Wire.write(0x00);                 //sends address to read from
@@ -174,6 +185,9 @@ void printADXLID(){
 
 
 void enableADXL() {
+  // Enables the measure bit in the PWR_CTL register.
+  // This function must be called prior to measurement (only needs to be
+  // called once after power up).
 
   Wire.beginTransmission(0x53);
   Wire.write(0x2D);                       // Access PWR_CTL Register
