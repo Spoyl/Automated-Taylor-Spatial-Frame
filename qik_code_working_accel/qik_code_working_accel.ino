@@ -41,9 +41,9 @@ byte xdat;
 byte id;
 int i;                         // Useful counter
 
-float x_out;
-float y_out;
-float z_out;
+int xa, xb;
+int ya, yb;
+int za, zb;
 
 
 
@@ -83,32 +83,53 @@ void setup() {
 
 
 
-
-
 void loop(){
 
-  enableADXL();       // enable the measure bit
-  setBW(13);          // set bandwidth to 400 Hz
-
+  enableADXL();                     // enable the measure bit
+  setBW(13);                        // set bandwidth to 400 Hz
   
-//  Wire.beginTransmission(0X53);     //start transmission to device
-//  Wire.write(0X32);                 //sends address to read from (WRITE appends 0)
-//  Wire.endTransmission(false);
-//  Wire.requestFrom(0x53, 6, true); // Read 6 bytes
-//  
-//  x_out = ( Wire.read()| Wire.read() << 8); // X-axis value
-//  y_out = ( Wire.read()| Wire.read() << 8); // Y-axis value
-//  z_out = ( Wire.read()| Wire.read() << 8); // Z-axis value
-//
-//  Serial.print("Xa= ");
-//  Serial.print(x_out);
-//  Serial.print("   Ya= ");
-//  Serial.print(y_out);
-//  Serial.print("   Za= ");
-//  Serial.println(z_out);
+
+  Wire.beginTransmission(0x53);     //start transmission to device
+  Wire.write(0x34);                 //sends address to read from (WRITE appends 0)
+  Wire.endTransmission(false);
+  Wire.requestFrom(0x53, 6, true);  // Read 6 bytes
+  
+  xa = ( Wire.read()| (Wire.read() << 8)); // X-axis value
+  ya = ( Wire.read()| (Wire.read() << 8)); // Y-axis value
+  za = ( Wire.read()| (Wire.read() << 8)); // Z-axis value
+  
+  Serial.print(xa);
+  Serial.print("\t");
+
+  Serial.print(ya);
+  Serial.print("\t");
+
+  Serial.println(za);
+  delay(50);
+}
+
+
+void readFIFOReg(){
+
+  Wire.beginTransmission(0x53);     //start transmission to device
+  Wire.write(0x38);                 // address the FIFO register
+  Wire.endTransmission(false);
+  Wire.requestFrom(0x53,1, true);   // Read 1 bytes
+  Serial.println(Wire.read(), BIN);
 
 }
 
+
+void readDataFormat(){
+  // Useful for checking if self-test is on
+  
+  Wire.beginTransmission(0x53);     //start transmission to device
+  Wire.write(0x31);                 // address the BW_RATE register
+  Wire.endTransmission(false);
+  Wire.requestFrom(0x53,1, true);   // Read 1 bytes
+  Serial.println(Wire.read(), BIN);
+  
+}
 
 
 void setBW(int RATE){
@@ -122,6 +143,7 @@ void setBW(int RATE){
   delay(10);
 
 }
+
 
 void readBW(){
   
@@ -144,7 +166,8 @@ void selfTest(){
   
   write_To(0x53, 0x31, 0);
   write_To(0x53, 0x31, 0xD7);
-  write_To(0x53, 0x31, 0);  
+  write_To(0x53, 0x31, 0);
+
 }
 
 
