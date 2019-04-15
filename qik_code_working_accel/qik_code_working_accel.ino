@@ -41,6 +41,12 @@ byte xdat;
 byte id;
 int i;                         // Useful counter
 
+float x_out;
+float y_out;
+float z_out;
+
+
+
 
 void setup() {
 
@@ -74,86 +80,52 @@ void setup() {
 }
 
 
+
+
+
+
+
 void loop(){
 
-  byte databit;
-  printVibrationData(1, databit, 1);
+  enableADXL();
+  
+  
+//  Wire.beginTransmission(0X53);     //start transmission to device
+//  Wire.write(0X32);                 //sends address to read from (WRITE appends 0)
+//  Wire.endTransmission(false);
+//  Wire.requestFrom(0x53, 6, true); // Read 6 bytes
+//  
+//  x_out = ( Wire.read()| Wire.read() << 8); // X-axis value
+//  y_out = ( Wire.read()| Wire.read() << 8); // Y-axis value
+//  z_out = ( Wire.read()| Wire.read() << 8); // Z-axis value
+//
+//  Serial.print("Xa= ");
+//  Serial.print(x_out);
+//  Serial.print("   Ya= ");
+//  Serial.print(y_out);
+//  Serial.print("   Za= ");
+//  Serial.println(z_out);
 
 }
 
 
-void printVibrationData(int num, byte dat, int i){
 
-  enableADXL();
-  setSampleRate();
-  normalPowerOp();
-  
-  // X SAMPLE --------------------------------------------------
-    Wire.beginTransmission(0x53);     //start transmission to device 
-    Wire.write(0x32);                 //sends address to read from
-    Wire.endTransmission();           //end transmission
-  
-    Wire.beginTransmission(0x53);     //restart transmission
-    Wire.requestFrom(0x53, num);      // request num bytes
-  
-    
-    if(Wire.available())           //device may send less than requested
-    { 
-      dat = Wire.read();              // receive a byte
-      Serial.print(dat, DEC);
-      Serial.print("\t");
-    }
-    else{
-      Serial.print("NAN");
-      Serial.print("\t");
-    }
-    
-    Wire.endTransmission();           //end transmission
-  //---------------------------------------------------------------
 
-  //Y SAMPLE ------------------------------------------------------
-    Wire.beginTransmission(0x53);     //start transmission to device 
-    Wire.write(0x34);                 //sends address to read from
-    Wire.endTransmission();           //end transmission
-  
-    Wire.beginTransmission(0x53);     //restart transmission
-    Wire.requestFrom(0x53, num);      // request num bytes
-  
-    
-    if(Wire.available())           //device may send less than requested
-    { 
-      dat = Wire.read();              // receive a byte
-      Serial.print(dat, DEC);
-      Serial.print("\t");
-    }
-    else{
-      Serial.print("NAN");
-      Serial.print("\t");
-    }
-    
-    Wire.endTransmission(); //end transmission
-  //----------------------------------------------------------------
 
-  // Z SAMPLE ------------------------------------------------------
-    Wire.beginTransmission(0x53);     //start transmission to device 
-    Wire.write(0x36);                 //sends address to read from
-    Wire.endTransmission();           //end transmission
+void checkBW(){
   
-    Wire.beginTransmission(0x53);     //restart transmission
-    Wire.requestFrom(0x53, num);      // request num bytes
+  // Returns the value of the BW_RATE register
+  // 1010 = 50 Hz BW
+  // 1101 = 400 Hz BW
+  // (Values can be found on page 10 of the spec sheet)
   
-    
-    if(Wire.available())              //device may send less than requested
-    { 
-      dat = Wire.read();              // receive a byte
-      Serial.println(dat, DEC);
-    }
-    else{
-      Serial.println("NAN");
-    }
-    
-    Wire.endTransmission();           //end transmission
-  //----------------------------------------------------------------
+  Wire.beginTransmission(0X53);     //start transmission to device
+  Wire.write(0x2C);                 // address the BW_RATE register
+  Wire.endTransmission(false);
+  Wire.requestFrom(0x53,1, true);   // Read 1 bytes
+  Serial.println(Wire.read(), BIN);
+  delay(1000);
+  
 }
 
 
@@ -171,9 +143,9 @@ void logVibration(){
   enableADXL();
   
   for (i=0;i<8000;i++){
-    readFromADXL(0x32, 1, X0DATA, i);       // Read X0 least significant byte
-    readFromADXL(0x34, 1, Y0DATA, i);       // Read Y0 least significant byte
-    readFromADXL(0x36, 1, Z0DATA, i);       // Read Z0 least significant byte
+    readFromADXL(0x33, 1, X0DATA, i);       // Read X0 least significant byte
+    readFromADXL(0x35, 1, Y0DATA, i);       // Read Y0 least significant byte
+    readFromADXL(0x37, 1, Z0DATA, i);       // Read Z0 least significant byte
   }
   
 }
@@ -181,30 +153,40 @@ void logVibration(){
 
 void printADXLID(){
   
-  readFromADXL(0x00, 1, &id, 1);
-  Serial.println(id, DEC);
+  // Returns the ADXL ID of 0xE5 (11100101)
+  
+  Wire.beginTransmission(0x53);     //start transmission to device
+  Wire.write(0x00);                 //sends address to read from
+  Wire.endTransmission(false);           //end transmission
+  
+  Wire.beginTransmission(0x53);     //restart transmission
+  Wire.requestFrom(0x53, 1);        // request num bytes
+
+  while(Wire.available())           //device may send less than requested
+  { 
+    
+    Serial.println(Wire.read(), HEX);          // receive a byte
+  }
+  
+  Wire.endTransmission(); //end transmission
 
 }
 
 
 void enableADXL() {
+
+  Wire.beginTransmission(0x53);
+  Wire.write(0x2D);                       // Access PWR_CTL Register
+  Wire.write(8);                          // 0000 1000 - Bit D3 High 
+  Wire.endTransmission(false);
+  delay(10);
   
-  write_To(0x53, 0x2D, 0);      
-  write_To(0x53, 0x2D, 16);             // 16 refers to D3 (measure) bit 
-  write_To(0x53, 0x2D, 8);              // does this set the bit?
-
-}
-
-
-void normalPowerOp(){
-
-  write_To(0x53, 0x2C, 0);
 }
 
 
 void setSampleRate(){
   
-  write_To(0x53,0x2C,0x0D);            // 3200Hz (0x0F) (change to 800Hz(0x0D))
+  write_To(0x53,0x2C,0x0D);            // 800Hz(0x0D)
 
 }
 
