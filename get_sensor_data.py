@@ -8,10 +8,15 @@ Created on Thu Apr 11 13:44:47 2019
 import csv
 import serial
 import time
- 
+import numpy as np
+import matplotlib as mpl
+import threading
+
+
 FILENAME="test_dat"
 PORT="com10"
-BAUD_RATE=9600
+BAUD_RATE=38400
+XYZ_ARRAY=np.empty(3)
     
     
 def writeData2File(f,writer):
@@ -61,20 +66,34 @@ def access_serial_data(baud_rate,port="com10"):
             [x, y, z]: (array) Holds the value for each axis
     """
     
-    kk=ser.readline()
-    kk2=kk.split()
-    print(kk2[0], kk2[1], kk[2])
-    x=kk2[0]
-    y=kk2[1]
-    z=kk2[2]
-        
-    return [x,y,z]
+    line=ser.readline()
+    
+    try:
+        data=line.split()
+        XYZ_ARRAY[0]=data[0]
+        XYZ_ARRAY[1]=data[1]
+        XYZ_ARRAY[2]=data[2]
+        print(line)
+
+    except IndexError:
+        print(str(line)+"\t<< Didn't receive three points")
+    
+    except ValueError:
+        print(str(line)+"\t<< Weird data")
+    
+    
+    return XYZ_ARRAY
     
 
 if __name__ =="__main__":
+    
     f=open(FILENAME+'.csv', 'wt')
     writer = csv.writer(f,delimiter='\t')
-    writeData2File(f, writer)
-    #ser = serial.Serial(PORT,BAUD_RATE,timeout=1)
+    ser = serial.Serial(PORT,BAUD_RATE,timeout=1)
+    
+    for i in range(100):
+        access_serial_data(BAUD_RATE, PORT)
+    
+
     f.close()
     ser.close()

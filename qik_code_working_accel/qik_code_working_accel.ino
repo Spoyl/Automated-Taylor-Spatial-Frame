@@ -54,7 +54,7 @@ void setup() {
       Wire.setSDA(18);
       Wire.setSCL(19);
       
-      Serial.begin(9600);
+      Serial.begin(38400);
       Serial1.begin(9600);        // Begin serial communication with HM17
       Serial2.begin(38400);       // Begin serial communication with driver boards
   //---------------------------
