@@ -19,7 +19,7 @@
 
   PololuQik2s9v1 qik(9,10,4);      // Declare qik object
 
-// DECLARE PI PARAMETERS
+// DECLARE PI CONTROL PARAMETERS
   const float Kp = 0.01;
   const float Ki = 0.1;
   long error;
@@ -28,22 +28,21 @@
   long val;
 //----------------------
 
+// DECLARE X Y AND Z BUFFERS
+int16_t xa;                     
+int16_t xb;
+int16_t ya;
+int16_t yb;
+int16_t za;
+int16_t zb;
+//----------------------
+
 String receivedText = "";       // String for bluetooth
 long num;
 byte xdat;
 
-// Declare arrays to store accelerometer data
-  byte X0DATA[8000];               
-  byte Y0DATA[8000];
-  byte Z0DATA[8000];
-//-------------------------------------------
-
 byte id;
 int i;                         // Useful counter
-
-int xa, xb;
-int ya, yb;
-int za, zb;
 
 
 
@@ -75,37 +74,50 @@ void setup() {
   
   pinMode(13, OUTPUT);        // Switch on Teensy LED
   digitalWrite(13, HIGH);
+
   
+  enableADXL();                     // enable the measure bit
+  setBW(13);                        // set bandwidth to 400 Hz
+  Wire.setClock(400000);
   delay(50);
 }
 
 
-
-
-
 void loop(){
 
-  enableADXL();                     // enable the measure bit
-  setBW(13);                        // set bandwidth to 400 Hz
+  readXYZ();
   
+}
 
+
+void selfTestOff(){
+  
+  Wire.beginTransmission(0x53);
+  Wire.write(0x31);                       // Access PWR_CTL Register
+  Wire.write(0xB);
+  Wire.endTransmission(false);
+  delay(40);
+  
+}
+
+
+void readXYZ(){
+  
   Wire.beginTransmission(0x53);     //start transmission to device
-  Wire.write(0x34);                 //sends address to read from (WRITE appends 0)
+  Wire.write(0x32);                 //sends address to read from (WRITE appends 0)
   Wire.endTransmission(false);
   Wire.requestFrom(0x53, 6, true);  // Read 6 bytes
-  
+
   xa = ( Wire.read()| (Wire.read() << 8)); // X-axis value
   ya = ( Wire.read()| (Wire.read() << 8)); // Y-axis value
   za = ( Wire.read()| (Wire.read() << 8)); // Z-axis value
   
   Serial.print(xa);
   Serial.print("\t");
-
   Serial.print(ya);
   Serial.print("\t");
-
   Serial.println(za);
-  delay(50);
+
 }
 
 
@@ -171,27 +183,13 @@ void selfTest(){
 }
 
 
-void logVibration(){
-
-  setSampleRate();
-  enableADXL();
-  
-  for (i=0;i<8000;i++){
-    readFromADXL(0x33, 1, X0DATA, i);       // Read X0 least significant byte
-    readFromADXL(0x35, 1, Y0DATA, i);       // Read Y0 least significant byte
-    readFromADXL(0x37, 1, Z0DATA, i);       // Read Z0 least significant byte
-  }
-  
-}
-
-
 void printADXLID(){
   
   // Returns the ADXL ID of 0xE5 (11100101). Useful for debugging.
   
   Wire.beginTransmission(0x53);     //start transmission to device
   Wire.write(0x00);                 //sends address to read from
-  Wire.endTransmission(false);           //end transmission
+  Wire.endTransmission(false);      //end transmission
   
   Wire.beginTransmission(0x53);     //restart transmission
   Wire.requestFrom(0x53, 1);        // request num bytes
@@ -199,10 +197,10 @@ void printADXLID(){
   while(Wire.available())           //device may send less than requested
   { 
     
-    Serial.println(Wire.read(), HEX);          // receive a byte
+    Serial.println(Wire.read(), HEX);    // receive a byte
   }
   
-  Wire.endTransmission(); //end transmission
+  Wire.endTransmission();           //end transmission
 
 }
 
@@ -221,13 +219,6 @@ void enableADXL() {
 }
 
 
-void setSampleRate(){
-  
-  write_To(0x53,0x2C,0x0D);            // 800Hz(0x0D)
-
-}
-
-
 void write_To(int device, byte address, byte val) {
   
   Wire.beginTransmission(device);     //start transmission to device 
@@ -235,26 +226,6 @@ void write_To(int device, byte address, byte val) {
   Wire.write(val);                    // send value to write
   Wire.endTransmission();             //end transmission
 
-}
-
-
-void readFromADXL(byte address, int num, byte buff[], int i) {
-  // If not used in a loop, set i to 1
-  
-  Wire.beginTransmission(0x53);     //start transmission to device 
-  Wire.write(address);              //sends address to read from
-  Wire.endTransmission();           //end transmission
-
-  Wire.beginTransmission(0x53);     //restart transmission
-  Wire.requestFrom(0x53, num);      // request num bytes
-
-  
-  while(Wire.available())           //device may send less than requested
-  { 
-    
-    buff[i] = Wire.read();             // receive a byte
-  }
-  Wire.endTransmission(); //end transmission
 }
 
 
