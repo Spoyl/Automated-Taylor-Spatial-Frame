@@ -9,13 +9,14 @@ import csv
 import serial
 import time
 import numpy as np
-import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.animation as anim
 import threading
 
 
 FILENAME="test_dat"
 PORT="com10"
-BAUD_RATE=38400
+BAUD_RATE=9600
 XYZ_ARRAY=np.empty(3)
     
     
@@ -43,7 +44,7 @@ def writeData2File(f,writer):
     writer.writerow((x,y,z))
 
 
-def access_serial_data(baud_rate,port="com10"):
+def access_serial_data(ser):
     """
     Reads data coming through the serial port assuming a three int format
     as defined in the corresponding arduino program.
@@ -73,27 +74,37 @@ def access_serial_data(baud_rate,port="com10"):
         XYZ_ARRAY[0]=data[0]
         XYZ_ARRAY[1]=data[1]
         XYZ_ARRAY[2]=data[2]
-        print(line)
+        print(str(XYZ_ARRAY))
 
     except IndexError:
-        print(str(line)+"\t<< Didn't receive three points")
+        XYZ_ARRAY[0]=np.nan
+        XYZ_ARRAY[1]=np.nan
+        XYZ_ARRAY[2]=np.nan
+        print(str(XYZ_ARRAY)+"\t<< Didn't receive three points")
     
     except ValueError:
-        print(str(line)+"\t<< Weird data")
-    
+        XYZ_ARRAY[0]=np.nan
+        XYZ_ARRAY[1]=np.nan
+        XYZ_ARRAY[2]=np.nan
+        print(str(XYZ_ARRAY)+"\t<< Weird data")
     
     return XYZ_ARRAY
-    
+
 
 if __name__ =="__main__":
     
-    f=open(FILENAME+'.csv', 'wt')
-    writer = csv.writer(f,delimiter='\t')
+#    f=open(FILENAME+'.csv', 'wt')
+#    writer = csv.writer(f,delimiter='\t')
     ser = serial.Serial(PORT,BAUD_RATE,timeout=1)
     
-    for i in range(100):
-        access_serial_data(BAUD_RATE, PORT)
+#    fig, ax = plt.subplots(figsize=(8,5))    
     
+    try:
+        for i in range(32000):
+            access_serial_data(ser)
+            
+    except KeyboardInterrupt:
+        print("Read Halted")
 
-    f.close()
+#    f.close()
     ser.close()
