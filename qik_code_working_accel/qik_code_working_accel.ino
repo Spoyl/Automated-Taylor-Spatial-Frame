@@ -46,14 +46,15 @@ int16_t y_array[24];
 int16_t z_array[24];
 
 int8_t fiforeg;
+int8_t zero = 0;
+int8_t FIFO = 64;
 
 
 void setup() {
 
   // SETUP COMMUNICATION LINES
       Wire.begin(I2C_MASTER,0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
-      //Wire.setClock(I2C_RATE_400);
-      Serial.begin(38400);
+      Serial.begin(9600);
       Serial1.begin(9600);        // Begin serial communication with HM17
       Serial2.begin(38400);       // Begin serial communication with driver boards
   //---------------------------
@@ -74,33 +75,56 @@ void setup() {
   pinMode(13, OUTPUT);        // Switch on Teensy LED
   digitalWrite(13, HIGH);
 
-  
-  enableADXL();                     // enable the measure bit
   setBW(13);                        // set bandwidth to 400 Hz
+  clearBuffer();                    // set FIFO register to Bypass mode (clears buffer)
+  setFIFOReg();                     // set FIFO register to fifo mode
+  enableADXL();                     // enable the measure bit
 
   delay(50);
-
 }
 
 
 void loop(){
-  delay(5000);
-  for (i=0;i<24;i++){
-    calibrateOffsetADXL(x_array, y_array, z_array);
-  }
-  readFIFOReg();
+
+  
+  readXYZ();
+  
+  //calibrateOffsetADXL(x_array, y_array, z_array);
+  
+}
+
+
+void clearBuffer(){
+  
+  Wire.beginTransmission(0x53);
+  Wire.write(0x38);                     // Access FIFO_CTL Register
+  Wire.write(zero);                     // Set to bypass mode => clears buffer
+  Wire.endTransmission();
+  delay(40);
+  
+}
+
+
+void setFIFOReg(){
+  
+  Wire.beginTransmission(0x53);
+  Wire.write(0x38);                       // Access FIFO_CTL Register
+  Wire.write(FIFO);                         // 64 = 1000000 FIFO mode
+  Wire.endTransmission();
+  delay(40);
 }
 
 
 void calibrateOffsetADXL(int16_t*x_ar, int16_t*y_ar, int16_t*z_ar){
-
+    
   for (i=0;i<24;i++){
+    
     Wire.beginTransmission(0x53);     //start transmission to device
     Wire.write(0x32);                 //sends address to read from (WRITE appends 0)
     Wire.endTransmission();
     Wire.requestFrom(0x53, 6);  // Read 6 bytes
 
-    if (Wire.available()==7){
+    if (Wire.available()==6){
       xa = ( Wire.read()| (Wire.read() << 8)); // X-axis value
       ya = ( Wire.read()| (Wire.read() << 8)); // Y-axis value
       za = ( Wire.read()| (Wire.read() << 8)); // Z-axis value
@@ -108,13 +132,14 @@ void calibrateOffsetADXL(int16_t*x_ar, int16_t*y_ar, int16_t*z_ar){
       x_ar[i] = xa;
       y_ar[i] = ya;
       z_ar[i] = za;
-    }
+    
+  }
     
     else{
-      Serial.println("Didn't get 7 bytes");   // beginTransmission() clears the buffer so dw
+      Serial.println("Didn't get 6 bytes");   // beginTransmission() clears the buffer so dw
     }
   }
-
+   
   for (i=0;i<24;i++){
     Serial.print(x_ar[i]);
     Serial.print("\t");
@@ -145,17 +170,25 @@ void readXYZ(){
   Wire.requestFrom(0x53, 6);        // Read 6 bytes
 
   if (Wire.available()==6){
+    
     xa = ( Wire.read()| (Wire.read() << 8)); // X-axis value
     ya = ( Wire.read()| (Wire.read() << 8)); // Y-axis value
     za = ( Wire.read()| (Wire.read() << 8)); // Z-axis value
+  
+    Serial.print(xa);
+    Serial.print("\t");
+    Serial.print(ya);
+    Serial.print("\t");
+    Serial.println(za);
+    delay(5);       // DO NOT REMOVE THIS LINE
   }
   
-  Serial.print(xa);
-  Serial.print("\t");
-  Serial.print(ya);
-  Serial.print("\t");
-  Serial.println(za);
-
+  else{
+    
+    Serial.println("Waiting...");
+    
+  }
+  
 }
 
 
@@ -174,7 +207,7 @@ void readFIFOReg(){
   else{
     Serial.println("no data");
   }
-
+delay(40);
 }
 
 
@@ -190,7 +223,7 @@ void readDataFormat(){
 }
 
 
-void setBW(int RATE){
+void setBW(int8_t RATE){
   // set the bandwidth of the ADXL
   // a value 13 gives a bandwidth of 400 Hz
   
