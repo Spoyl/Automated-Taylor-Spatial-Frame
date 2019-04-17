@@ -1,6 +1,6 @@
+#include <i2c_t3.h>
 #include <PololuQik.h>
 #include <Encoder.h>
-#include <Wire.h>
 
 
 // DECLARE ENCODER PINS
@@ -30,11 +30,8 @@
 
 // DECLARE X Y AND Z BUFFERS
 int16_t xa;                     
-int16_t xb;
 int16_t ya;
-int16_t yb;
 int16_t za;
-int16_t zb;
 //----------------------
 
 String receivedText = "";       // String for bluetooth
@@ -44,16 +41,18 @@ byte xdat;
 byte id;
 int i;                         // Useful counter
 
+int16_t x_array[24];
+int16_t y_array[24];
+int16_t z_array[24];
 
+int8_t fiforeg;
 
 
 void setup() {
 
   // SETUP COMMUNICATION LINES
-      Wire.begin();               // Begin i2c for ADXL375
-      Wire.setSDA(18);
-      Wire.setSCL(19);
-      
+      Wire.begin(I2C_MASTER,0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
+      //Wire.setClock(I2C_RATE_400);
       Serial.begin(38400);
       Serial1.begin(9600);        // Begin serial communication with HM17
       Serial2.begin(38400);       // Begin serial communication with driver boards
@@ -78,15 +77,52 @@ void setup() {
   
   enableADXL();                     // enable the measure bit
   setBW(13);                        // set bandwidth to 400 Hz
-  Wire.setClock(400000);
+
   delay(50);
+
 }
 
 
 void loop(){
+  delay(5000);
+  for (i=0;i<24;i++){
+    calibrateOffsetADXL(x_array, y_array, z_array);
+  }
+  readFIFOReg();
+}
 
-  readXYZ();
-  
+
+void calibrateOffsetADXL(int16_t*x_ar, int16_t*y_ar, int16_t*z_ar){
+
+  for (i=0;i<24;i++){
+    Wire.beginTransmission(0x53);     //start transmission to device
+    Wire.write(0x32);                 //sends address to read from (WRITE appends 0)
+    Wire.endTransmission();
+    Wire.requestFrom(0x53, 6);  // Read 6 bytes
+
+    if (Wire.available()==7){
+      xa = ( Wire.read()| (Wire.read() << 8)); // X-axis value
+      ya = ( Wire.read()| (Wire.read() << 8)); // Y-axis value
+      za = ( Wire.read()| (Wire.read() << 8)); // Z-axis value
+      
+      x_ar[i] = xa;
+      y_ar[i] = ya;
+      z_ar[i] = za;
+    }
+    
+    else{
+      Serial.println("Didn't get 7 bytes");   // beginTransmission() clears the buffer so dw
+    }
+  }
+
+  for (i=0;i<24;i++){
+    Serial.print(x_ar[i]);
+    Serial.print("\t");
+    Serial.print(y_ar[i]);
+    Serial.print("\t");
+    Serial.println(z_ar[i]);
+  }
+
 }
 
 
@@ -95,7 +131,7 @@ void selfTestOff(){
   Wire.beginTransmission(0x53);
   Wire.write(0x31);                       // Access PWR_CTL Register
   Wire.write(0xB);
-  Wire.endTransmission(false);
+  Wire.endTransmission();
   delay(40);
   
 }
@@ -105,12 +141,14 @@ void readXYZ(){
   
   Wire.beginTransmission(0x53);     //start transmission to device
   Wire.write(0x32);                 //sends address to read from (WRITE appends 0)
-  Wire.endTransmission(false);
-  Wire.requestFrom(0x53, 6, true);  // Read 6 bytes
+  Wire.endTransmission();
+  Wire.requestFrom(0x53, 6);        // Read 6 bytes
 
-  xa = ( Wire.read()| (Wire.read() << 8)); // X-axis value
-  ya = ( Wire.read()| (Wire.read() << 8)); // Y-axis value
-  za = ( Wire.read()| (Wire.read() << 8)); // Z-axis value
+  if (Wire.available()==6){
+    xa = ( Wire.read()| (Wire.read() << 8)); // X-axis value
+    ya = ( Wire.read()| (Wire.read() << 8)); // Y-axis value
+    za = ( Wire.read()| (Wire.read() << 8)); // Z-axis value
+  }
   
   Serial.print(xa);
   Serial.print("\t");
@@ -125,9 +163,17 @@ void readFIFOReg(){
 
   Wire.beginTransmission(0x53);     //start transmission to device
   Wire.write(0x38);                 // address the FIFO register
-  Wire.endTransmission(false);
-  Wire.requestFrom(0x53,1, true);   // Read 1 bytes
-  Serial.println(Wire.read(), BIN);
+  Wire.endTransmission();
+  Wire.requestFrom(0x53,1);         // Read 1 bytes
+  
+  if(Wire.available()){
+      fiforeg = Wire.read();
+      Serial.println(fiforeg, BIN);
+  }
+  
+  else{
+    Serial.println("no data");
+  }
 
 }
 
@@ -137,7 +183,7 @@ void readDataFormat(){
   
   Wire.beginTransmission(0x53);     //start transmission to device
   Wire.write(0x31);                 // address the BW_RATE register
-  Wire.endTransmission(false);
+  Wire.endTransmission();
   Wire.requestFrom(0x53,1, true);   // Read 1 bytes
   Serial.println(Wire.read(), BIN);
   
@@ -151,7 +197,7 @@ void setBW(int RATE){
   Wire.beginTransmission(0x53);
   Wire.write(0x2C);                       // Access PWR_CTL Register
   Wire.write(RATE);
-  Wire.endTransmission(false);
+  Wire.endTransmission();
   delay(10);
 
 }
@@ -166,8 +212,8 @@ void readBW(){
   
   Wire.beginTransmission(0X53);     //start transmission to device
   Wire.write(0x2C);                 // address the BW_RATE register
-  Wire.endTransmission(false);
-  Wire.requestFrom(0x53,1, true);   // Read 1 bytes
+  Wire.endTransmission();
+  Wire.requestFrom(0x53,1);   // Read 1 bytes
   Serial.println(Wire.read(), BIN);
   delay(10);
   
@@ -189,7 +235,7 @@ void printADXLID(){
   
   Wire.beginTransmission(0x53);     //start transmission to device
   Wire.write(0x00);                 //sends address to read from
-  Wire.endTransmission(false);      //end transmission
+  Wire.endTransmission();           //end transmission
   
   Wire.beginTransmission(0x53);     //restart transmission
   Wire.requestFrom(0x53, 1);        // request num bytes
@@ -213,7 +259,7 @@ void enableADXL() {
   Wire.beginTransmission(0x53);
   Wire.write(0x2D);                       // Access PWR_CTL Register
   Wire.write(8);                          // 0000 1000 - Bit D3 High 
-  Wire.endTransmission(false);
+  Wire.endTransmission();
   delay(10);
   
 }

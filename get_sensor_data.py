@@ -53,13 +53,7 @@ def access_serial_data(ser):
         Parameters
         ----------
                     
-            baud_rate: (int) Defines the baud rate of the port being read.
-                    The rate can be found in the Arduino code - line should 
-                    read "Serial.begin(<baud_rate>)".
-                    
-            port: (str) Define the com port to be read. Defaults to com10. 
-                        The port can be found under "tools - port" in the 
-                        Arduino interface.
+            ser: (<Serial object>) An opened serial port
                     
         Returns
         -------
