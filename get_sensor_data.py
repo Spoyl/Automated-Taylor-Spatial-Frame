@@ -11,16 +11,21 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
-import threading
+import scipy.signal as signal
 
 
 FILENAME="test_dat"
 PORT="com10"
-BAUD_RATE=9600
+BAUD_RATE=38400
 XYZ_ARRAY=np.empty(3)
-    
-    
-def writeData2File(f,writer):
+FILENAME="TestData"
+X_ARRAY = []
+Y_ARRAY = []
+Z_ARRAY = []
+
+
+
+def writeData2File(f,writer,data):
     """
     Reads a line of serial data (x, y, z) using access_serial_data and
     writes the data to a csv file.
@@ -41,7 +46,7 @@ def writeData2File(f,writer):
     writer.writerow(['Column3=Z axis'])
     writer.writerow(['[Data]'])
     
-    writer.writerow((x,y,z))
+    writer.writerow(data)
 
 
 def access_serial_data(ser):
@@ -85,20 +90,108 @@ def access_serial_data(ser):
     return XYZ_ARRAY
 
 
+def readDataFile():
+    f = open(FILENAME+'.txt', "r")
+    lines = f.readlines()
+    lines = lines[6:]
+    
+    for line in lines:
+        
+        line=line.rstrip("]\n")
+        line=line.lstrip("[")
+        line=line.split()
+        X_ARRAY.append(np.float(line[0]))
+        Y_ARRAY.append(np.float(line[1]))
+        Z_ARRAY.append(np.float(line[2]))
+    
+    f.close()
+    
+    x_mean=np.nanmean(X_ARRAY)
+    y_mean=np.nanmean(Y_ARRAY)
+    z_mean=np.nanmean(Z_ARRAY)
+    
+    print(np.shape(X_ARRAY))
+    print(np.shape(Y_ARRAY))
+    
+    return x_mean,y_mean,z_mean
+    
+
 if __name__ =="__main__":
-    
-#    f=open(FILENAME+'.csv', 'wt')
-#    writer = csv.writer(f,delimiter='\t')
+
+    f=open(FILENAME+'.txt', 'w')
+    writer = csv.writer(f,delimiter='\t')
     ser = serial.Serial(PORT,BAUD_RATE,timeout=1)
-    
-#    fig, ax = plt.subplots(figsize=(8,5))    
+    date=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+
+    f.write("HEADER\n")
+    f.write('date='+date+"\n")
+    f.write('Column1=X\n')
+    f.write('Column2=Y\n')
+    f.write('Column3=Z\n')
+    f.write('DATA\n')
     
     try:
         for i in range(32000):
-            access_serial_data(ser)
+            data=access_serial_data(ser)
+            f.writelines(str(data)+"\n")
             
     except KeyboardInterrupt:
+        
         print("Read Halted")
+        f.close()
+        ser.close()
+        x,y,z=readDataFile()
+        print("Means:")
+        print(x,y,z)
+        t=np.arange(0,len(X_ARRAY))/800
+        print(t)
+        
+        plt.figure(figsize=(16,6))
+        plt.title("X axis")
+        plt.grid()
+        plt.plot(t, X_ARRAY)
+        
+        plt.figure(figsize=(16,6))
+        plt.title("Y axis")
+        plt.grid()
+        plt.plot(t, Y_ARRAY)
+        plt.show()
+        
+        plt.figure(figsize=(16,6))
+        plt.title("Z axis")
+        plt.grid()
+        plt.plot(t, Z_ARRAY)
+        plt.show()
+        
+        f, psd_x_han = signal.welch(X_ARRAY, 400, nperseg=256, window = "hanning")
 
+        plt.figure(figsize=(16,6))
+        plt.title("X axis PSD")
+        plt.plot(f, psd_x_han)
+        plt.xlabel("Frequency, Hz")
+        plt.grid()
+        plt.show()
+
+
+    
 #    f.close()
-    ser.close()
+#    ser.close()
+#    x,y,z=readDataFile()
+#    print(x,y,z)
+#    t=np.arange(0,len(X_ARRAY))/400
+#    
+#    plt.figure(figsize=(16,6))
+#    plt.grid()
+#    plt.plot(t, X_ARRAY)
+#    plt.show()
+#    
+#    plt.figure(figsize=(16,6))
+#    plt.grid()
+#    plt.plot(t, Y_ARRAY)
+#    plt.show()
+#    
+#    plt.figure(figsize=(16,6))
+#    plt.grid()
+#    plt.plot(t, Z_ARRAY)
+#    plt.show()
+    
