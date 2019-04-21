@@ -76,23 +76,24 @@ PololuQik2s9v1 qik(9,10,4);      // Declare qik object
   unsigned long t1;
 // ---------------
 
-// BUFFERS FOR READING ADXL 377
+// BUFFERS FOR READING ADXL 377 - DEPRECATED
   int scale = 200;
   float scaledX, scaledY, scaledZ;
   int analogX, analogY, analogZ;
 // ----------------------------
 
-String receivedText = "";       // String for bluetooth
+// ADXL375 OFFSETS
+  int8_t OFSX=2;
+  int8_t OFSY=-1;
+  int8_t OFSZ=-2;
+// ----------------
 
+String receivedText = "";       // Useful string for bluetooth
 int i;                         // Useful counter
 
 int8_t fiforeg;
 int8_t zero = 0;
 int8_t FIFO = 64;
-
-int8_t OFSX=2;
-int8_t OFSY=-1;
-int8_t OFSZ=-2;
 
 
 void setup() {
@@ -135,13 +136,7 @@ void setup() {
     setOFSZ();
     enableADXL();                     // enable the measure bit
   // ----------------------
-
-  // ADXL 377 z SETUP
-//    pinMode(A6, INPUT);       // Z axis
-//    pinMode(A7, INPUT);       // Y axis
-//    pinMode(A8, INPUT);       // X axis
-  // -----------------
-  
+    
     delay(50);
 }
 
@@ -154,7 +149,6 @@ void loop(){
 //    
   
   readXYZADXL();
-  delayMicroseconds(980);    
 
 //  }
 //  
@@ -166,6 +160,12 @@ void loop(){
 
 
 void setOFSX(){
+  /*
+   * Sets the X offset of the ADXL 375 prior to measurement.
+   * For experimental work, the offset can be removed during 
+   * postprocessing.
+  */
+  
   Wire.beginTransmission(0x53);
   Wire.write(0x1E);                       // Access PWR_CTL Register
   Wire.write(OFSX);
@@ -175,6 +175,11 @@ void setOFSX(){
 
 
 void setOFSY(){
+  /*
+   * Sets the Y offset of the ADXL 375 prior to measurement.
+   * For experimental work, the offset can be removed during 
+   * postprocessing.
+  */
   Wire.beginTransmission(0x53);
   Wire.write(0x1F);                       // Access PWR_CTL Register
   Wire.write(OFSY);
@@ -184,6 +189,11 @@ void setOFSY(){
 
 
 void setOFSZ(){
+  /*
+   * Sets the Z offset of the ADXL 375 prior to measurement.
+   * For experimental work, the offset can be removed during 
+   * postprocessing.
+  */
   Wire.beginTransmission(0x53);
   Wire.write(0x20);                       // Access PWR_CTL Register
   Wire.write(OFSZ);
@@ -193,10 +203,11 @@ void setOFSZ(){
 
 
 void measureVibration(unsigned long TIME){
-  // Main function for measuring vibration during test
-  // 
-  // Time:
-  //  The length of time that the ADXL will transmit data
+  /* Main function for measuring vibration during test
+   *  
+   *  TIME (Unsigned long):  
+   *    The length of time that the ADXL will transmit data
+  */
   
     setBW(13);                        // set bandwidth to 400 Hz
     clearBuffer();                    // set FIFO register to Bypass mode (clears buffer)
@@ -208,11 +219,6 @@ void measureVibration(unsigned long TIME){
     while (millis()<(t0+TIME)){
       readXYZADXL();
     }
-
-//    Uncomment this section to check the time elapsed since the loop began
-//    t1 = millis()-t0;           
-//    Serial.println("Time elapsed: ");
-//    Serial.println(t1);
 
     disableADXL();
     clearBuffer();
@@ -343,6 +349,8 @@ void readXYZADXL(){
     delay(1);
     
   }
+  
+  delayMicroseconds(980);
   
 }
 
