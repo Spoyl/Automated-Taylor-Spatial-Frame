@@ -40,8 +40,8 @@
     void restoreTd(float Tarray[][4]);
     void assignRx(float thetax, float Tarray[][4]);
     void restoreRx(float Tarray[][4]);
-    // void assignRy(float thetay, float Tarray[][4]);
-    // void restoreRy(float Tarray[][4]);
+    void assignRy(float thetay, float Tarray[][4]);
+    void restoreRy(float Tarray[][4]);
     // void assignRz(float thetaz, float Tarray[][4]);
     // void restoreRz(float Tarray[][4]);
 // --------------------
@@ -49,32 +49,32 @@
 
 int main(void){
 
-printf("Before assignment:\n");
-for (i=0;i<4;i++){
-        for(x=0;x<4;x++){
-            printf("%f\n", Rx[i][x]);
-        }
-    }
-
-printf("After:\n");
-
-    assignRx(90, Rx);
-
+    printf("Before assignment:\n");
     for (i=0;i<4;i++){
-        for(x=0;x<4;x++){
-            printf("%f\n", Rx[i][x]);
+            for(x=0;x<4;x++){
+                printf("%f\n", Rx[i][x]);
+            }
         }
-    }
 
-    printf("Restore:\n");
+    printf("After:\n");
 
-    restoreRx(Rx);
+        assignRx(90, Rx);
 
-    for (i=0;i<4;i++){
-        for(x=0;x<4;x++){
-            printf("%f\n", Rx[i][x]);
+        for (i=0;i<4;i++){
+            for(x=0;x<4;x++){
+                printf("%f\n", Rx[i][x]);
+            }
         }
-    }
+
+        printf("Restore:\n");
+
+        restoreRx(Rx);
+
+        for (i=0;i<4;i++){
+            for(x=0;x<4;x++){
+                printf("%f\n", Rx[i][x]);
+            }
+        }
 
     return 1;
 }
@@ -127,5 +127,24 @@ void restoreRx(float Tarray[][4]){
     Tarray[1][1]=1;
     Tarray[1][2]=0;
     Tarray[2][1]=0;
+    Tarray[2][2]=1;
+}
+
+
+void assignRy(float thetay, float Tarray[][4]){
+    rad=(M_PI/180.0)*thetay;
+
+    Tarray[0][0]=cos(rad);
+    Tarray[0][2]=sin(rad);
+    Tarray[2][0]=sin(rad);
+    Tarray[2][2]=cos(rad);
+}
+
+
+void restoreRy(float Tarray[][4]){
+
+    Tarray[0][0]=1;
+    Tarray[0][2]=0;
+    Tarray[2][0]=0;
     Tarray[2][2]=1;
 }
