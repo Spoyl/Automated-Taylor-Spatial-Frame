@@ -30,10 +30,12 @@
 //----------------------
 
 // Mathematical Structures and Constants
+    float sum=0;
     float rad;
-    float P[6];
     float D[6];
-    float L[6];     // L=P-B
+    float L[6];     // L=P-D
+    float P[6][3] = {{-7.49,93.5,0},{7.49,93.5,0},{84.72,-40.26,0},{77.23,-53.24,0},{-77.23,-53.24,0},{-84.72,-40.26,0}}; //Matrix of xyz vectors
+    float d[6][3] = {{-7.49,93.5,0},{7.49,93.5,0},{84.72,-40.26,0},{77.23,-53.24,0},{-77.23,-53.24,0},{-84.72,-40.26,0}}; //Matrix of xyz vectors
     float Tp[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
     float Td[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
     float Tv[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
@@ -61,7 +63,8 @@
     void dotProduct(float A[][4], float B[][4], float resultMat[][4]);
     void restoreResult();
     void restoreTmpResult();
-    void calcTv(float thetax,float thetay,float thetaz,float vx,float vy,float vz);
+    void restoreT();
+    void calctransv(float thetax,float thetay,float thetaz,float vx,float vy,float vz);
 // --------------------
 
 // USEFUL TEST MATRICES
@@ -72,38 +75,30 @@ float B[4][4]={{1,2,3,4},{2,3,4,5},{3,4,5,6},{4,5,6,7}};
 
 int main(void){
 
-    printf("Before calc:\n");
+    calctransv(0,0,0,0,0,0);   // Tm is now assigned to global 'Result' variable
+    assignTp(0,0,0);
+    assignTd(0,0,0);
+
+    dotProduct(Td,Result,tmpResult);  // postmultiply
+    dotProduct(tmpResult, Tp, T);
 
     for (i=0;i<4;i++){
         for(j=0;j<4;j++){
-            printf("%f\n", Result[j][i]);
-        }
-    }
-
-    printf("After:\n");
-
-    calcTv(0,0,45,0,0,1);
-
-    for (i=0;i<4;i++){
-        for(j=0;j<4;j++){
-            printf("%f\n", Result[j][i]);
-        }
-    }
-
-    printf("Restore:\n");
-
+            printf("%f ", T[j][i]);
+            }
+        printf("\n");
+    }   
+    
+    restoreTp();
+    restoreTd();
     restoreResult();
+    restoreTmpResult();
 
-    for (i=0;i<4;i++){
-        for(j=0;j<4;j++){
-            printf("%f\n", Result[j][i]);
-        }
-    }
 return 1;
 }
 
 
-void calcTv(float thetax,float thetay,float thetaz,float vx,float vy,float vz){
+void calctransv(float thetax,float thetay,float thetaz,float vx,float vy,float vz){
     
     assignRx(thetax);
     assignRy(thetay);
@@ -112,9 +107,10 @@ void calcTv(float thetax,float thetay,float thetaz,float vx,float vy,float vz){
 
     dotProduct(Rx,Ry,Result);           // Result=Rx.Ry
     dotProduct(Result,Rz,tmpResult);    // tmpResult=Result.Rz
-    restoreResult();                    // just to be tidy
+    restoreResult();                    // tidy up
 
-    dotProduct(tmpResult,Tv,Result);    // Result=Tv
+    dotProduct(tmpResult,Tv,Result);    // Result=Transv
+    restoreTmpResult();
     restoreRx();
     restoreRy();
     restoreRz();
@@ -233,7 +229,7 @@ void restoreRz(float Tarray[][4]){
 }
 
 
-void dotProduct(float A[][4], float B[][4], float resultMat[][4]){
+void dotProduct(float A[4][4], float B[4][4], float resultMat[4][4]){
 /*
  * This function is misleadingly named - it 
  * might be more accurately named 
@@ -252,12 +248,14 @@ void dotProduct(float A[][4], float B[][4], float resultMat[][4]){
 
     for(i=0;i<4;i++){
         for(j=0;j<4;j++){
+            resultMat[i][j]=0;
             for (k=0;k<4;k++){
-                resultMat[i][j]=resultMat[i][j]+(A[i][k]*B[k][j]);
+                resultMat[i][j]+=(A[i][k]*B[k][j]);
             }
         }
     }
 }
+
 
 
 void restoreResult(){
@@ -275,6 +273,15 @@ void restoreTmpResult(){
     for (i=0;i<4;i++){
         for(x=0;x<4;x++){
             tmpResult[i][x]=0;
+        }
+    }
+}
+
+void restoreT(){
+
+    for (i=0;i<4;i++){
+        for(x=0;x<4;x++){
+            T[i][x]=0;
         }
     }
 }
