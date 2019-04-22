@@ -16,6 +16,9 @@
 // Clinical measurements
     float ux,uy,uz;
     float dx,dy,dz;
+    float vx=20;
+    float vy=20;
+    float vz = 20;
     int i;
     int x;
 //----------------------
@@ -34,16 +37,18 @@
 // ------------------------------------
 
 // Function Prototypes
-    void assignTp(float ux,float uy,float uz,float Tarray[][4]);
-    void restoreTp(float Tarray[][4]);
-    void assignTd(float dx,float dy,float dz,float Tarray[][4]);
-    void restoreTd(float Tarray[][4]);
-    void assignRx(float thetax, float Tarray[][4]);
-    void restoreRx(float Tarray[][4]);
-    void assignRy(float thetay, float Tarray[][4]);
-    void restoreRy(float Tarray[][4]);
-    // void assignRz(float thetaz, float Tarray[][4]);
-    // void restoreRz(float Tarray[][4]);
+    void assignTp(float ux,float uy,float uz);
+    void restoreTp();
+    void assignTd(float dx,float dy,float dz);
+    void restoreTd();
+    void assignTv(float vx,float vy,float vz);
+    void restoreTv();
+    void assignRx(float thetax);
+    void restoreRx();
+    void assignRy(float thetay);
+    void restoreRy();
+    void assignRz(float thetaz);
+    void restoreRz();
 // --------------------
 
 
@@ -52,27 +57,27 @@ int main(void){
     printf("Before assignment:\n");
     for (i=0;i<4;i++){
             for(x=0;x<4;x++){
-                printf("%f\n", Rx[i][x]);
+                printf("%f\n", Tv[x][i]);
             }
         }
 
     printf("After:\n");
 
-        assignRx(90, Rx);
+        assignTv(vx,vy,vz);
 
         for (i=0;i<4;i++){
             for(x=0;x<4;x++){
-                printf("%f\n", Rx[i][x]);
+                printf("%f\n", Tv[x][i]);
             }
         }
 
         printf("Restore:\n");
 
-        restoreRx(Rx);
+        restoreTv();
 
         for (i=0;i<4;i++){
             for(x=0;x<4;x++){
-                printf("%f\n", Rx[i][x]);
+                printf("%f\n", Tv[x][i]);
             }
         }
 
@@ -80,71 +85,112 @@ int main(void){
 }
 
 
-void assignTp(float Ux,float Uy,float Uz,float Tarray[][4]){
-    Tarray[0][3]=Ux;
-    Tarray[1][3]=Uy;
-    Tarray[2][3]=Uz;
+void assignTp(float Ux,float Uy,float Uz){
+    Tp[0][3]=Ux;
+    Tp[1][3]=Uy;
+    Tp[2][3]=Uz;
 }
 
 
-void restoreTp(float Tarray[][4]){
-    Tarray[0][3]=0;
-    Tarray[1][3]=0;
-    Tarray[2][3]=0;
+void restoreTp(){
+    Tp[0][3]=0;
+    Tp[1][3]=0;
+    Tp[2][3]=0;
 }
 
 
-void assignTd(float dx,float dy,float dz,float Tarray[][4]){
-    Tarray[0][3]=dx;
-    Tarray[1][3]=dy;
-    Tarray[2][3]=dz;
+void assignTd(float Dx,float Dy,float Dz){
+    Td[0][3]=Dx;
+    Td[1][3]=Dy;
+    Td[2][3]=Dz;
 }
 
 
 void restoreTd(float Tarray[][4]){
-    Tarray[0][3]=0;
-    Tarray[1][3]=0;
-    Tarray[2][3]=0;
+    Td[0][3]=0;
+    Td[1][3]=0;
+    Td[2][3]=0;
 }
 
-void assignRx(float thetax, float Tarray[][4]){
+
+void assignTv(float Vx,float Vy,float Vz){
+    Tv[0][3]=Vx;
+    Tv[1][3]=Vy;
+    Tv[2][3]=Vz;
+}
+
+
+void restoreTv(){
+    Tv[0][3]=0;
+    Tv[1][3]=0;
+    Tv[2][3]=0;
+}
+
+
+void assignRx(float thetax){
     /*
      * thetax must be provided in degrees!
-     * This function handles the conversion to Radians
      * 
     */
     rad=(M_PI/180.0)*thetax;
 
-    Tarray[1][1]=cos(rad);
-    Tarray[1][2]=-sin(rad);
-    Tarray[2][1]=sin(rad);
-    Tarray[2][2]=cos(rad);
+    Rx[1][1]=cos(rad);
+    Rx[1][2]=-sin(rad);
+    Rx[2][1]=sin(rad);
+    Rx[2][2]=cos(rad);
 
 }
 
-void restoreRx(float Tarray[][4]){
+void restoreRx(){
 
-    Tarray[1][1]=1;
-    Tarray[1][2]=0;
-    Tarray[2][1]=0;
-    Tarray[2][2]=1;
+    Rx[1][1]=1;
+    Rx[1][2]=0;
+    Rx[2][1]=0;
+    Rx[2][2]=1;
 }
 
 
-void assignRy(float thetay, float Tarray[][4]){
+void assignRy(float thetay){
+    /*
+     * thetay must be provided in degrees!
+     * 
+    */
     rad=(M_PI/180.0)*thetay;
 
-    Tarray[0][0]=cos(rad);
-    Tarray[0][2]=sin(rad);
-    Tarray[2][0]=sin(rad);
-    Tarray[2][2]=cos(rad);
+    Ry[0][0]=cos(rad);
+    Ry[0][2]=sin(rad);
+    Ry[2][0]=sin(rad);
+    Ry[2][2]=cos(rad);
 }
 
 
-void restoreRy(float Tarray[][4]){
+void restoreRy(){
 
-    Tarray[0][0]=1;
-    Tarray[0][2]=0;
-    Tarray[2][0]=0;
-    Tarray[2][2]=1;
+    Ry[0][0]=1;
+    Ry[0][2]=0;
+    Ry[2][0]=0;
+    Ry[2][2]=1;
+}
+
+
+void assignRz(float thetaz){
+    /*
+     * thetax must be provided in degrees!
+     * 
+    */
+    rad=(M_PI/180.0)*thetaz;
+
+    Rz[0][0]=cos(rad);
+    Rz[0][1]=-sin(rad);
+    Rz[1][0]=sin(rad);
+    Rz[1][1]=cos(rad);
+}
+
+
+void restoreRz(float Tarray[][4]){
+
+    Rz[0][0]=1;
+    Rz[0][1]=0;
+    Rz[1][0]=0;
+    Rz[1][1]=1;
 }
