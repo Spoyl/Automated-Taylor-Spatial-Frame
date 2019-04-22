@@ -37,6 +37,7 @@
     float Tp[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
     float Td[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
     float Tv[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
+    float T[4][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
     float Rx[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
     float Ry[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
     float Rz[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
@@ -57,45 +58,67 @@
     void restoreRy();
     void assignRz(float thetaz);
     void restoreRz();
-    void dotProduct(float A[][4], float B[][4]);
-    void matrixMult(float A[][4], float B[][4]);
+    void dotProduct(float A[][4], float B[][4], float resultMat[][4]);
     void restoreResult();
+    void restoreTmpResult();
+    void calcTv(float thetax,float thetay,float thetaz,float vx,float vy,float vz);
 // --------------------
 
+// USEFUL TEST MATRICES
 float A[4][4]={{1,2,3,4},{2,3,4,5},{3,4,5,6},{4,5,6,7}};
 float B[4][4]={{1,2,3,4},{2,3,4,5},{3,4,5,6},{4,5,6,7}};
+// --------------------
 
 
 int main(void){
 
     printf("Before calc:\n");
+
     for (i=0;i<4;i++){
-            for(x=0;x<4;x++){
-                printf("%f\n", Result[x][i]);
-            }
+        for(j=0;j<4;j++){
+            printf("%f\n", Result[j][i]);
         }
+    }
 
     printf("After:\n");
 
-        dotProduct(A,B);
+    calcTv(0,0,45,0,0,1);
 
-        for (i=0;i<4;i++){
-            for(x=0;x<4;x++){
-                printf("%f\n", Result[x][i]);
-            }
+    for (i=0;i<4;i++){
+        for(j=0;j<4;j++){
+            printf("%f\n", Result[j][i]);
         }
+    }
 
-        printf("Restore:\n");
+    printf("Restore:\n");
 
-        restoreResult();
+    restoreResult();
 
-        for (i=0;i<4;i++){
-            for(x=0;x<4;x++){
-                printf("%f\n", Result[x][i]);
-            }
+    for (i=0;i<4;i++){
+        for(j=0;j<4;j++){
+            printf("%f\n", Result[j][i]);
         }
+    }
+return 1;
+}
 
-    return 1;
+
+void calcTv(float thetax,float thetay,float thetaz,float vx,float vy,float vz){
+    
+    assignRx(thetax);
+    assignRy(thetay);
+    assignRz(thetaz);
+    assignTv(vx,vy,vz);
+
+    dotProduct(Rx,Ry,Result);           // Result=Rx.Ry
+    dotProduct(Result,Rz,tmpResult);    // tmpResult=Result.Rz
+    restoreResult();                    // just to be tidy
+
+    dotProduct(tmpResult,Tv,Result);    // Result=Tv
+    restoreRx();
+    restoreRy();
+    restoreRz();
+    restoreTv();
 }
 
 
@@ -210,18 +233,27 @@ void restoreRz(float Tarray[][4]){
 }
 
 
-void dotProduct(float A[][4], float B[][4]){
+void dotProduct(float A[][4], float B[][4], float resultMat[][4]){
 /*
- * Order doesn't matter for the dot product 
- * (non-commutative). This function is needed 
- * to calculate the rototransformation matrix 
- * Tv.
+ * This function is misleadingly named - it 
+ * might be more accurately named 
+ * 'MatrixMultiplication' or similar. The dot 
+ * product is a commutative vector operation
+ * whereas matrix multiplication extends the 
+ * dot product to multiply two matrices - This
+ * is non-commutative.
+ * This function calculates the transformation matrix 
+ * Tv. Having 'Result' as an argument is just
+ * done to aid readability - the function could
+ * just act on the global variable without it 
+ * being passed to the function.
+ * 
 */
 
     for(i=0;i<4;i++){
         for(j=0;j<4;j++){
             for (k=0;k<4;k++){
-                Result[i][j]=Result[i][j]+(A[i][k]*B[k][j]);
+                resultMat[i][j]=resultMat[i][j]+(A[i][k]*B[k][j]);
             }
         }
     }
@@ -238,17 +270,11 @@ void restoreResult(){
 }
 
 
-void matrixMult(float A[][4], float B[][4]){
-/*
- * ORDER MATTERS: AB!=BA
- * 
-*/
+void restoreTmpResult(){
 
-    for(i=0;i<4;i++){
-        for(j=0;j<4;j++){
-            for (k=0;k<4;k++){
-                //Result[i][x]=Result[i][x]+(A[][]*B[][]);
-            }
+    for (i=0;i<4;i++){
+        for(x=0;x<4;x++){
+            tmpResult[i][x]=0;
         }
     }
 }
