@@ -14,12 +14,18 @@
 #include <math.h>
 
 // Clinical measurements
-    float ux,uy,uz;
-    float dx,dy,dz;
+    float ux;
+    float uy;
+    float uz;
+    float dx;
+    float dy;
+    float dz;
     float vx=20;
     float vy=20;
-    float vz = 20;
+    float vz=20;
     int i;
+    int j;
+    int k;
     int x;
 //----------------------
 
@@ -34,6 +40,8 @@
     float Rx[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
     float Ry[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
     float Rz[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
+    float Result[][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+    float tmpResult[][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 // ------------------------------------
 
 // Function Prototypes
@@ -49,35 +57,41 @@
     void restoreRy();
     void assignRz(float thetaz);
     void restoreRz();
+    void dotProduct(float A[][4], float B[][4]);
+    void matrixMult(float A[][4], float B[][4]);
+    void restoreResult();
 // --------------------
+
+float A[4][4]={{1,2,3,4},{2,3,4,5},{3,4,5,6},{4,5,6,7}};
+float B[4][4]={{1,2,3,4},{2,3,4,5},{3,4,5,6},{4,5,6,7}};
 
 
 int main(void){
 
-    printf("Before assignment:\n");
+    printf("Before calc:\n");
     for (i=0;i<4;i++){
             for(x=0;x<4;x++){
-                printf("%f\n", Tv[x][i]);
+                printf("%f\n", Result[x][i]);
             }
         }
 
     printf("After:\n");
 
-        assignTv(vx,vy,vz);
+        dotProduct(A,B);
 
         for (i=0;i<4;i++){
             for(x=0;x<4;x++){
-                printf("%f\n", Tv[x][i]);
+                printf("%f\n", Result[x][i]);
             }
         }
 
         printf("Restore:\n");
 
-        restoreTv();
+        restoreResult();
 
         for (i=0;i<4;i++){
             for(x=0;x<4;x++){
-                printf("%f\n", Tv[x][i]);
+                printf("%f\n", Result[x][i]);
             }
         }
 
@@ -193,4 +207,48 @@ void restoreRz(float Tarray[][4]){
     Rz[0][1]=0;
     Rz[1][0]=0;
     Rz[1][1]=1;
+}
+
+
+void dotProduct(float A[][4], float B[][4]){
+/*
+ * Order doesn't matter for the dot product 
+ * (non-commutative). This function is needed 
+ * to calculate the rototransformation matrix 
+ * Tv.
+*/
+
+    for(i=0;i<4;i++){
+        for(j=0;j<4;j++){
+            for (k=0;k<4;k++){
+                Result[i][j]=Result[i][j]+(A[i][k]*B[k][j]);
+            }
+        }
+    }
+}
+
+
+void restoreResult(){
+
+    for (i=0;i<4;i++){
+        for(x=0;x<4;x++){
+            Result[i][x]=0;
+        }
+    }
+}
+
+
+void matrixMult(float A[][4], float B[][4]){
+/*
+ * ORDER MATTERS: AB!=BA
+ * 
+*/
+
+    for(i=0;i<4;i++){
+        for(j=0;j<4;j++){
+            for (k=0;k<4;k++){
+                //Result[i][x]=Result[i][x]+(A[][]*B[][]);
+            }
+        }
+    }
 }
