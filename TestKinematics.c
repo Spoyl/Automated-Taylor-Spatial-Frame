@@ -31,8 +31,9 @@
 // Mathematical Structures and Constants
     float sum=0;
     float rad;
-    float D[6][4]={{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
-    float L[6];     // L=P-D
+    float lengths[6]={0,0,0,0,0,0};
+    float D[6][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+    float L[6][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};     // L=P-D
     float P[6][4] = {{-7.49,93.5,0,1},{7.49,93.5,0,1},{84.72,-40.26,0,1},{77.23,-53.24,0,1},{-77.23,-53.24,0,1},{-84.72,-40.26,0,1}}; //Matrix of xyz1
     float d[6][4] = {{-7.49,93.5,0,1},{7.49,93.5,0,1},{84.72,-40.26,0,1},{77.23,-53.24,0,1},{-77.23,-53.24,0,1},{-84.72,-40.26,0,1}}; //Matrix of xyz1
     float Tp[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
@@ -66,6 +67,8 @@
     void restoreT();
     void calctransv(float thetax,float thetay,float thetaz,float vx,float vy,float vz);
     void defineD();
+    void findDifference(float distal[6][4],float ref[6][4], float struts[6][4]);
+    void findLengths(float link[6][4], float outputVec[6]);
 // --------------------
 
 // USEFUL TEST MATRICES
@@ -76,9 +79,9 @@ float B[4][4]={{1,2,3,4},{2,3,4,5},{3,4,5,6},{4,5,6,7}};
 
 int main(void){
 
-    calctransv(0,0,0,0,0,10);   // Tm is now assigned to global 'Result' variable
-    assignTp(0,0,2);
-    assignTd(0,0,3);
+    calctransv(0,10,0,0,0,10);   // Tm is now assigned to global 'Result' variable
+    assignTp(0,0,200);
+    assignTd(0,0,300);
 
     dotProduct(Td,Result,tmpResult);    // postmultiply
     dotProduct(tmpResult, Tp, T);       // T == global transformation matrix
@@ -114,16 +117,48 @@ for (i=0;i<4;i++){
     } 
 
 printf("\nD= \n");
-    for (i=0;i<6;i++){ 
-        printf("\n");
-        for (j=0;j<4;j++) { 
-            printf("%f ", D[i][j]);
-        }
-    }  
+for (i=0;i<6;i++){ 
+    printf("\n");
+    for (j=0;j<4;j++) { 
+        printf("%f ", D[i][j]);
+    }
+}
+findDifference(D,P,L);
+printf("\nL= \n");
+for (i=0;i<6;i++){ 
+    printf("\n");
+    for (j=0;j<4;j++) { 
+        printf("%f ", L[i][j]);
+    }
+}
+
+findLengths(L,lengths);
+for (i=0;i<6;i++){
+    printf("%f\n", lengths[i]);
+}
 
 return 1;
 }
 
+
+void findLengths(float link[6][4], float outputVec[6]){
+    for (i=0;i<6;i++){ 
+        sum=0;
+        for (j=0;j<4;j++) {
+            sum+=link[i][j]*link[i][j];
+        }
+    outputVec[i]=sqrt(sum);
+    }  
+}
+
+
+void findDifference(float distal[6][4],float ref[6][4], float struts[6][4]){
+    for (i=0;i<6;i++){ 
+        for (j=0;j<4;j++) {
+            struts[i][j]+=distal[i][j]-ref[i][j];
+        }
+    }  
+}
 
 
 void calctransv(float thetax,float thetay,float thetaz,float vx,float vy,float vz){
