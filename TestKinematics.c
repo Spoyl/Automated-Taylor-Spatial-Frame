@@ -202,7 +202,7 @@ void assignTd(float Dx,float Dy,float Dz){
 }
 
 
-void restoreTd(float Tarray[][4]){
+void restoreTd(){
     Td[3][0]=0;
     Td[3][1]=0;
     Td[3][2]=0;
@@ -271,7 +271,7 @@ void restoreRy(){
 
 void assignRz(float thetaz){
     /*
-     * thetax must be provided in degrees!
+     * thetaz must be provided in degrees!
      * 
     */
     rad=(M_PI/180.0)*thetaz;
@@ -283,7 +283,7 @@ void assignRz(float thetaz){
 }
 
 
-void restoreRz(float Tarray[][4]){
+void restoreRz(){
 
     Rz[0][0]=1;
     Rz[0][1]=0;
