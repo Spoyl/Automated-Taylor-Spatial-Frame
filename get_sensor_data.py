@@ -22,7 +22,7 @@ FILENAME="TestData"
 X_ARRAY = []
 Y_ARRAY = []
 Z_ARRAY = []
-
+DATETIME = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
 
 
 def writeData2File(f,writer,data):
@@ -47,6 +47,8 @@ def writeData2File(f,writer,data):
     writer.writerow(['[Data]'])
     
     writer.writerow(data)
+    
+    return date
 
 
 def access_serial_data(ser):
@@ -91,7 +93,7 @@ def access_serial_data(ser):
 
 
 def readDataFile():
-    f = open(FILENAME+'.txt', "r")
+    f = open(FILENAME+DATETIME+'.txt', "r")
     lines = f.readlines()
     lines = lines[6:]
     
@@ -118,7 +120,7 @@ def readDataFile():
 
 if __name__ =="__main__":
 
-    f=open(FILENAME+'.txt', 'w')
+    f=open(FILENAME+DATETIME+'.txt', 'w')
     writer = csv.writer(f,delimiter='\t')
     ser = serial.Serial(PORT,BAUD_RATE,timeout=1)
     date=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
@@ -147,23 +149,33 @@ if __name__ =="__main__":
         print(t)
         
         plt.figure(figsize=(16,6))
+        for i,x in enumerate(X_ARRAY):
+            if str(x) == "nan":
+                X_ARRAY[i]=(X_ARRAY[i-1]+X_ARRAY[i+1])/2.
         plt.title("X axis")
         plt.grid()
         plt.plot(t, X_ARRAY)
         
         plt.figure(figsize=(16,6))
+        for i,z in enumerate(Z_ARRAY):
+            if str(z) == "nan":
+                Z_ARRAY[i]=(Z_ARRAY[i-1]+Z_ARRAY[i+1])/2.   
         plt.title("Y axis")
         plt.grid()
         plt.plot(t, Y_ARRAY)
         plt.show()
         
         plt.figure(figsize=(16,6))
+        for i,y in enumerate(Y_ARRAY):
+            if str(y) == "nan":
+                Y_ARRAY[i]=(Y_ARRAY[i-1]+Y_ARRAY[i+1])/2.
+        
         plt.title("Z axis")
         plt.grid()
         plt.plot(t, Z_ARRAY)
         plt.show()
         
-        f, psd_x_han = signal.welch(X_ARRAY, 400, nperseg=256, window = "hanning")
+        f, psd_x_han = signal.welch(X_ARRAY, 800, nperseg=256, window = "hanning")
 
         plt.figure(figsize=(16,6))
         plt.title("X axis PSD")
@@ -173,25 +185,3 @@ if __name__ =="__main__":
         plt.show()
 
 
-    
-#    f.close()
-#    ser.close()
-#    x,y,z=readDataFile()
-#    print(x,y,z)
-#    t=np.arange(0,len(X_ARRAY))/400
-#    
-#    plt.figure(figsize=(16,6))
-#    plt.grid()
-#    plt.plot(t, X_ARRAY)
-#    plt.show()
-#    
-#    plt.figure(figsize=(16,6))
-#    plt.grid()
-#    plt.plot(t, Y_ARRAY)
-#    plt.show()
-#    
-#    plt.figure(figsize=(16,6))
-#    plt.grid()
-#    plt.plot(t, Z_ARRAY)
-#    plt.show()
-    
