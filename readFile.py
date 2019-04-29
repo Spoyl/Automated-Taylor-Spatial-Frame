@@ -15,20 +15,22 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import numpy as np
 
-# GLOBAL VARIABLES
-BASE_DIR="C:\\Users\\Oliver\\Desktop\\GDPTestData\\"
-FILENAME="TestData2019_04_25_17_15_10"
-FILE_DIR=BASE_DIR+FILENAME
-FC1 = 300
-FC2 = 350
-FS = 800
-# ----------------
+## GLOBAL VARIABLES
+#BASE_DIR="C:\\Users\\Oliver\\Desktop\\GDPTestData\\"
+#FILENAME="TestData2019_04_25_19_10_36"
+#FILE_DIR=BASE_DIR+FILENAME
+#FC1 = 300
+#FC2 = 350
+#FS = 800
+## ----------------
 
 
-def plot_signal_trio(X_ARRAY,Y_ARRAY,Z_ARRAY):
+def plot_signal_trio(X_ARRAY,Y_ARRAY,Z_ARRAY, FS):
     """
     
     """
+    t=np.arange(0,len(X_ARRAY))/FS # Create time axis
+
     plt.figure(figsize=(16,10))
     plt.subplot(311)
     plt.title("X axis")
@@ -52,19 +54,15 @@ def plot_signal_trio(X_ARRAY,Y_ARRAY,Z_ARRAY):
 def apply_filter(b,a,X_ARRAY,Y_ARRAY,Z_ARRAY):
     """
     Applies a defined filter b a to the x y and z axes
-    
-    
     """
     X_ARRAY_FILT = signal.lfilter(b, a, X_ARRAY)
-    
     Y_ARRAY_FILT = signal.lfilter(b, a, Y_ARRAY)
-    
     Z_ARRAY_FILT = signal.lfilter(b, a, Z_ARRAY)
     
     return X_ARRAY_FILT, Y_ARRAY_FILT, Z_ARRAY_FILT
 
 
-def rm_means(X_ARRAY,Y_ARRAY,Z_ARRAY):
+def rm_means(X_ARRAY,Y_ARRAY,Z_ARRAY, x_mean, y_mean, z_mean):
     """
     Remove means from the x y and z arrays
     """
@@ -118,17 +116,17 @@ def butter_band(fc1, fc2, fs, order=5):
     b,a = signal.butter(order,passband,btype='band')    #make filter
     w,h=signal.freqz(b,a)   #find frequencies
     
-    plt.figure(figsize=(10,6))
-    plt.semilogx((fs*0.5/np.pi)*w, abs(h), label=str(order))
-    plt.axvline(fc1,color= "orange")
-    plt.axvline(fc2, color="orange")
-    plt.xlabel("Frequency")
-    plt.ylabel("Gain")
-    plt.title("Butterworth Bandpass Filter")
-    plt.legend(title="Order")
-    plt.grid()
-    plt.savefig("butterband.png")
-    plt.show()
+#    # Uncomment this section to create a plot of the filter
+#    plt.figure(figsize=(10,6))
+#    plt.semilogx((fs*0.5/np.pi)*w, abs(h), label=str(order))
+#    plt.axvline(fc1,color= "orange")
+#    plt.axvline(fc2, color="orange")
+#    plt.xlabel("Frequency")
+#    plt.ylabel("Gain")
+#    plt.title("Butterworth Bandpass Filter")
+#    plt.legend(title="Order")
+#    plt.grid()
+#    plt.show()
     
     return b,a
 
@@ -170,46 +168,57 @@ def find_means(X_ARRAY, Y_ARRAY, Z_ARRAY):
     return x_mean,y_mean,z_mean
 
 
-X_ARRAY, Y_ARRAY, Z_ARRAY=readDataFile(FILE_DIR)
-X_ARRAY,Y_ARRAY,Z_ARRAY = rm_nans(X_ARRAY,Y_ARRAY,Z_ARRAY)
-x_mean,y_mean,z_mean = find_means(X_ARRAY, Y_ARRAY, Z_ARRAY)
+def calc_power_spectra(X_ARRAY, Y_ARRAY, Z_ARRAY, FS):
+    
+    PSD_ARRAY = []
+    
+    f1, psd_x = signal.welch(X_ARRAY, FS, nperseg=256, window = "hanning")
+    f2, psd_y = signal.welch(Y_ARRAY, FS, nperseg=256, window = "hanning")
+    f3, psd_z = signal.welch(Z_ARRAY, FS, nperseg=256, window = "hanning")
+    
+    PSD_ARRAY.append(f1)
+    PSD_ARRAY.append(psd_x)
+    PSD_ARRAY.append(f2)
+    PSD_ARRAY.append(psd_y)
+    PSD_ARRAY.append(f3)
+    PSD_ARRAY.append(psd_z)
+    
+    return PSD_ARRAY
 
-print("Means:")
-print("x:\t"+str(round(x_mean)))
-print("y:\t"+str(round(y_mean)))
-print("z:\t"+str(round(z_mean)))
 
-t=np.arange(0,len(X_ARRAY))/FS # Create time axis
-
-X_ARRAY,Y_ARRAY,Z_ARRAY = rm_means(X_ARRAY,Y_ARRAY,Z_ARRAY)
-
-b, a = butter_band(FC1,FC2,FS)
-X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT = apply_filter(b,a,X_ARRAY,
-                                                      Y_ARRAY,Z_ARRAY)
-
-plot_signal_trio(X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT)
-
-# CALCULATE POWER SPECTRA
-f1, psd_x = signal.welch(X_ARRAY_FILT, FS, nperseg=256, window = "hanning")
-f2, psd_y = signal.welch(Y_ARRAY_FILT, FS, nperseg=256, window = "hanning")
-f3, psd_z = signal.welch(Z_ARRAY_FILT, FS, nperseg=256, window = "hanning")
-
-plt.figure(figsize=(16,6))
-plt.title("Power Spectral Density")
-plt.plot(f1, psd_x)
-plt.plot(f2, psd_y)
-plt.plot(f3, psd_z)
-plt.ylabel("Power")
-plt.xlabel("Frequency, Hz")
-plt.grid()
-plt.show()
-# -----------------------
-
-#x_fft=np.fft.fft(X_ARRAY)
-#f=np.fft.fftfreq(len(X_ARRAY), 1/800)
+#X_ARRAY, Y_ARRAY, Z_ARRAY=readDataFile(FILE_DIR)
+#X_ARRAY,Y_ARRAY,Z_ARRAY = rm_nans(X_ARRAY,Y_ARRAY,Z_ARRAY)
+#x_mean,y_mean,z_mean = find_means(X_ARRAY, Y_ARRAY, Z_ARRAY)
+#
+#t=np.arange(0,len(X_ARRAY))/FS # Create time axis
+#
+#X_ARRAY,Y_ARRAY,Z_ARRAY = rm_means(X_ARRAY,Y_ARRAY,Z_ARRAY)
+#
+#b, a = butter_band(FC1,FC2,FS)
+#X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT = apply_filter(b,a,X_ARRAY,
+#                                                      Y_ARRAY,Z_ARRAY)
+#
+#plot_signal_trio(X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT)
+#
+## CALCULATE POWER SPECTRA
+#PSD_ARRAY = calc_power_spectra(X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT)
+#
 #plt.figure(figsize=(16,6))
-#plt.title("X axis Fft")
-#plt.plot(f, x_fft)
+#plt.title("Power Spectral Density")
+#plt.plot(PSD_ARRAY[0],PSD_ARRAY[1])
+#plt.plot(PSD_ARRAY[2],PSD_ARRAY[3])
+#plt.plot(PSD_ARRAY[4],PSD_ARRAY[5])
+#plt.ylabel("Power")
 #plt.xlabel("Frequency, Hz")
 #plt.grid()
-#plt.show()        
+#plt.show()
+## -----------------------
+#
+##x_fft=np.fft.fft(X_ARRAY)
+##f=np.fft.fftfreq(len(X_ARRAY), 1/800)
+##plt.figure(figsize=(16,6))
+##plt.title("X axis Fft")
+##plt.plot(f, x_fft)
+##plt.xlabel("Frequency, Hz")
+##plt.grid()
+##plt.show()        
