@@ -8,19 +8,28 @@ Created on Mon Apr 29 15:41:12 2019
 from readFile import *
 from os import listdir
 from numpy import mean
+import datetime
+
 
 BASE_DIR="C:\\Users\\Oliver\\Desktop\\GDPTestData\\"
 FILENAME="TestData2019_04_25_19_25_39"
-FC1 = 300
-FC2 = 350
+FC1 = 360
+FC2 = 390
 FS = 800
 Z_AVE_ARRAY = []
 X_AVE_ARRAY = []
 Y_AVE_ARRAY = []
+DATETIME_ARRAY = []
+TIME_DELTAS = []
+TIME_AXIS = []
+
 
 for file_name in listdir(BASE_DIR):
     
     FILE_DIR=BASE_DIR+file_name
+    
+    time = datetime.datetime.strptime(file_name[8:-4], "%Y_%m_%d_%H_%M_%S")
+    DATETIME_ARRAY.append(time)
     
     # GET ZYX DATA
     X_ARRAY, Y_ARRAY, Z_ARRAY=readDataFile(FILE_DIR)
@@ -37,38 +46,18 @@ for file_name in listdir(BASE_DIR):
     # CALCULATE POWER SPECTRA
     PSD_ARRAY = calc_power_spectra(X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT, FS)
     
-    # PLOTS
+    ## PLOTS
     #plot_signal_trio(X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT, FS)
     #plot_power_spectra(PSD_ARRAY)
     
     X_AVE_ARRAY.append(mean(PSD_ARRAY[1]))
     Y_AVE_ARRAY.append(mean(PSD_ARRAY[3]))
     Z_AVE_ARRAY.append(mean(PSD_ARRAY[5]))
-    
-plt.figure(figsize=(16,6))
-t_ax = np.arange(0,len(X_AVE_ARRAY))
-plt.plot(t_ax, X_AVE_ARRAY)
-plt.grid()
-plt.show()
 
-plt.figure(figsize=(16,6))
-t_ax = np.arange(0,len(Y_AVE_ARRAY))
-plt.plot(t_ax, Y_AVE_ARRAY)
-plt.grid()
-plt.show()
+for time in DATETIME_ARRAY:
+    TIME_DELTAS.append(time-DATETIME_ARRAY[0])
 
-plt.figure(figsize=(16,6))
-t_ax = np.arange(0,len(Z_AVE_ARRAY))
-plt.plot(t_ax, Z_AVE_ARRAY)
-plt.grid()
-plt.show()
+for i,t in enumerate(TIME_DELTAS):
+    TIME_AXIS.append(t.total_seconds())
 
-
-#x_fft=np.fft.fft(X_ARRAY)
-#f=np.fft.fftfreq(len(X_ARRAY), 1/800)
-#plt.figure(figsize=(16,6))
-#plt.title("X axis Fft")
-#plt.plot(f, x_fft)
-#plt.xlabel("Frequency, Hz")
-#plt.grid()
-#plt.show()  
+plot_ave_power(X_AVE_ARRAY,Y_AVE_ARRAY,Z_AVE_ARRAY, TIME_AXIS)

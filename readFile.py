@@ -16,10 +16,23 @@ from scipy import signal
 import numpy as np
 
 
-def plot_signal_trio(X_ARRAY,Y_ARRAY,Z_ARRAY, FS):
-    """
+def plot_ave_power(X_AVE_ARRAY,Y_AVE_ARRAY,Z_AVE_ARRAY,TIME_AXIS):
     
-    """
+    t_ax = np.arange(0,len(X_AVE_ARRAY))
+
+    plt.figure(figsize=(16,10))
+    plt.plot(TIME_AXIS, X_AVE_ARRAY, label="x axis")    
+    plt.plot(TIME_AXIS, Y_AVE_ARRAY, label="y axis")
+    plt.plot(TIME_AXIS, Z_AVE_ARRAY, label="z axis")
+    plt.xlabel("time, s")
+    plt.ylabel("Average Power")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
+def plot_signal_trio(X_ARRAY,Y_ARRAY,Z_ARRAY, FS):
+    
     t=np.arange(0,len(X_ARRAY))/FS # Create time axis
 
     plt.figure(figsize=(16,10))
