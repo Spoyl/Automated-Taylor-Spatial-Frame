@@ -202,4 +202,4 @@ def plot_power_spectra(PSD_ARRAY):
     plt.legend()
     plt.grid()
     plt.show()
-      
+

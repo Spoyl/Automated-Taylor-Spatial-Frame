@@ -7,14 +7,15 @@ Created on Mon Apr 29 15:41:12 2019
 
 from readFile import *
 from os import listdir
+import numpy as np
 from numpy import mean
 import datetime
 
 
 BASE_DIR="C:\\Users\\Oliver\\Desktop\\GDPTestData\\"
 FILENAME="TestData2019_04_25_19_25_39"
-FC1 = 370
-FC2 = 390
+FC1 = 290
+FC2 = 300
 FS = 800
 Z_AVE_ARRAY = []
 X_AVE_ARRAY = []
@@ -47,12 +48,23 @@ for file_name in listdir(BASE_DIR):
     PSD_ARRAY = calc_power_spectra(X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT, FS)
     
     ## PLOTS
-    #plot_signal_trio(X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT, FS)
-    #plot_power_spectra(PSD_ARRAY)
+    plot_signal_trio(X_ARRAY_FILT,Y_ARRAY_FILT,Z_ARRAY_FILT, FS)
+    plot_power_spectra(PSD_ARRAY)
     
     X_AVE_ARRAY.append(mean(PSD_ARRAY[1]))
     Y_AVE_ARRAY.append(mean(PSD_ARRAY[3]))
     Z_AVE_ARRAY.append(mean(PSD_ARRAY[5]))
+    
+#    plt.figure(figsize=(16,6))
+#    A=np.fft.fft(X_ARRAY_FILT, FS)
+#    #amp=np.abs(A)
+#    #A=np.clip(A, 0.01, 100)
+#    lim=int(len(freq)/2)
+#    freq=np.fft.fftfreq(FS)
+#    plt.semilogy(freq[:lim], A[:lim])
+#    plt.grid()
+#    plt.show()
+    
 
 for time in DATETIME_ARRAY:
     TIME_DELTAS.append(time-DATETIME_ARRAY[0])
