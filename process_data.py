@@ -14,7 +14,7 @@ import datetime
 
 BASE_DIR="C:\\Users\\Oliver\\Desktop\\GDPTestData\\"
 FILENAME="TestData2019_04_25_19_25_39"
-FC1 = 290
+FC1 = 280
 FC2 = 300
 FS = 800
 Z_AVE_ARRAY = []
