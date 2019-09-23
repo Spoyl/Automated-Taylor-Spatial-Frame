@@ -6,7 +6,7 @@
  * 
  * This script is written for GDP 47 - fracture 
  * fixation device. Direct code queries to 
- * ojs1g14@soton.ac.uk.
+ * Spoyl (github account).
  * 
 */
 
